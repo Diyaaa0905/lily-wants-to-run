@@ -1,5 +1,7 @@
 # ⋆˙⟡Lily Wants to Run⟡˙⋆
 
+![Game Demo](game-demo.gif)
+
 **Lily Wants to Run** is a 2D side-scrolling platformer game developed in Python using Pygame.
 
 Join Lily on her endless journey through colorful levels filled with obstacles and challenges, and help her run away!! ^_^ ── .✦

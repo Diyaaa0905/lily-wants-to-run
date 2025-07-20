@@ -4,18 +4,6 @@ import time
 import pygame
 from sys import exit
 
-#FEATURES TO BE ADDED:
-#board design
-#pause screen, add: how to play, volume(drop-down: bg music, sfx), restart
-#level complete: sparkles, sparkly flower beside 'flowers collected: ...' (if new record of flowers collected: blinking 'BEST!')
-#start screen: how to play menu, volume(drop-down: bg music, sfx), made by, version
-#move 'tutorial' to how-to-play
-#game start: huge shiny "Lily Wants to Run" (big,left-enter->big,center-stay-> big, right-exit->small, right-enter-> small, center-stay), all other options pop up (total takes: 4sec)
-#start game clicked: intro loop stops, 'portal enter whoosh sfx' + portal enter aniimation, game music start
-    #music tranistion :((( <------- NOT NEEDED ANYMORE!! :D
-#background design (YT: watch-later list!!)
-#save-load file system
-
 pygame.mixer.pre_init(frequency=44100, size=-16, channels=5, buffer=32)
 pygame.init()
 pygame.mixer.init() #For music
@@ -1012,18 +1000,3 @@ while True:
 
     pygame.display.update()
     clock.tick(60) #FPS=60 MAX in this project
-
-#File save-load feature (IN PROGRESS)
-"""#Find files (level1.py, level2.py, etc)
-level_files= []
-for f in os.listdir("levels"):
-    if f.startswith("level") and f.endswith(".py"):
-        level_files.append(f)
-level_files.sort()
-
-#Importing levels
-levels= []
-for f in level_files:
-    mod= importlib.import_module(f"levels.{f[:-3]}") #Importing level1.py, level2.py, etc
-    level= getattr(mod, "Level") #Getting classes Level1, Level2, etc
-    levels.append(level())"""

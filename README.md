@@ -102,4 +102,4 @@ I'm always open to helpful criticism and suggestions. Feel free to open an **Iss
 ## --License--
 This project is open source under the MIT License.
 
----
+<h1 align="center">== ⋅˚₊‧ ୨୧ ‧₊˚⋅ ==</h1>

@@ -4,6 +4,10 @@ import time
 import pygame
 from sys import exit
 
+from music import *
+from buttons import *
+
+#Initializing music mixer
 pygame.mixer.pre_init(frequency=44100, size=-16, channels=5, buffer=32)
 pygame.init()
 pygame.mixer.init() #For music
@@ -14,191 +18,10 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Lily Wants To Run") #Title
 clock = pygame.time.Clock() #FPS of game
 
-#Button Class
-class Button:
-    def __init__(self, image, image_pressed, alpha, text, x, y):
-        self.image_original = image.copy()
-        self.image = image.copy()
-        self.image_pressed = image_pressed.copy()
-        self.alpha = alpha
-
-        self.rect = self.image.get_rect()
-        self.rect.topleft = (x, y)
-
-        self.clicked = False
-        self.was_pressed = False
-        self.was_hovered = False
-
-        self.original_width = image.get_width()
-        self.original_height = image.get_height()
-
-        self.font_size = 25.0 
-        self.original_font_size = 25.0
-        self.final_font_size = self.original_font_size * 0.8
-        self.text = text
-        
-    def draw(self):
-        screen.blit(self.image, self.rect)
-
-        if self.clicked:
-            text_color = "White"
-        else:
-            text_color = "Black"
-
-        font = pygame.font.Font("assets/font/Minecraft.ttf", int(self.font_size))
-        text_surface = font.render(self.text, True, text_color)
-        text_rect = text_surface.get_rect(center=self.rect.center)
-
-        screen.blit(text_surface, text_rect)
-    
-    def is_hover(self):
-        mouse_pos = pygame.mouse.get_pos()
-        if self.rect.collidepoint(mouse_pos):
-            return True
-        return False
-    
-    def update_alpha(self):
-        target_alpha = 255 if self.is_hover() else 125
-
-        if self.alpha < target_alpha:
-            self.alpha = min(self.alpha + 10, target_alpha)
-        elif self.alpha > target_alpha:
-            self.alpha = max(self.alpha - 10, target_alpha)
-        self.image.set_alpha(self.alpha)
-
-    def animate_in(self, final_width, final_height):
-        if self.is_hover():
-            width = self.image.get_width()
-            height = self.image.get_height()
-            center = self.rect.center
-
-            if width > final_width:
-                width = max(width - self.original_width*0.2//10, final_width)
-            if height > final_height:
-                height = max(height - self.original_height*0.2//10, final_height)
-
-            current_scale = width / self.original_width
-            final_font = self.original_font_size * current_scale
-            if self.font_size > final_font:
-                self.font_size = max(self.font_size - 0.8, final_font)
-
-            if self.clicked:
-                source_img = self.image_pressed
-            else:
-                source_img = self.image_original
-
-            self.image = pygame.transform.smoothscale(source_img, (width, height))
-            self.image.set_alpha(self.alpha)
-            self.rect = self.image.get_rect(center=center)
-
-    def animate_out(self, final_width, final_height):
-        if not self.is_hover():
-            width = self.image.get_width()
-            height = self.image.get_height()
-            center = self.rect.center
-
-            if width < final_width:
-                width = min(width + self.original_width*0.2//10, final_width)
-            if height < final_height:
-                height = min(height + self.original_height*0.2//10, final_height)
-
-            current_scale = width / self.original_width
-            final_font = self.original_font_size * current_scale
-            if self.font_size < final_font:
-                self.font_size = min(self.font_size + 0.8, final_font)
-
-            if self.clicked:
-                source_img = self.image_pressed
-            else:
-                source_img = self.image_original
-
-            self.image = pygame.transform.smoothscale(source_img, (width, height))
-            self.image.set_alpha(self.alpha)
-            self.rect = self.image.get_rect(center=center)
-
-    def animate(self):
-        if self.is_hover():
-            self.animate_in(self.original_width*0.8, self.original_height*0.8)
-            if not self.was_hovered:
-                button_channel.play(button_hover_sound)
-        else:
-            self.animate_out(self.original_width, self.original_height)
-        
-        #Update hover state for next frame
-        self.was_hovered = self.is_hover()
-
-        self.image.set_alpha(self.alpha)
-        self.draw()
-
-    def is_clicked(self):
-        mouse_pressed = pygame.mouse.get_pressed()[0]
-        
-        #Check if mouse is over button & pressed
-        if self.is_hover() and mouse_pressed:
-            self.clicked = True
-            self.was_pressed = True
-
-        #Check if button was pressed & now mouse is released
-        if self.was_pressed and not mouse_pressed:
-            self.was_pressed = False
-            self.clicked = False
-            #Only trigger if mouse is still hovering over button when released
-            if self.is_hover():
-                button_channel.play(button_click_sound)
-                return True
-        
-        #Reset clicked state if mouse is not pressed
-        if not mouse_pressed:
-            self.clicked = False
-            
-        return False
-    
-    def reset(self):
-        self.image = pygame.transform.scale(self.image_original, (self.original_width, self.original_height))
-        self.font_size = self.original_font_size
-
-#Buttons
-button_img = pygame.transform.scale(pygame.image.load("assets/buttons/button.png").convert_alpha(), (150,50))
-button_click_img = pygame.transform.scale(pygame.image.load("assets/buttons/button_press.png").convert_alpha(), (150,50))
-pause_button_img = pygame.transform.scale(pygame.image.load("assets/buttons/pause_button.png").convert_alpha(), (50,50))
-pause_button_click_img = pygame.transform.scale(pygame.image.load("assets/buttons/pause_button_press.png").convert_alpha(), (50,50))
-
-start_button = Button(button_img, button_click_img, 255, "START", WIDTH//2 - button_img.get_width()//2, 275)
-exit_button = Button(button_img, button_click_img, 255, "EXIT", WIDTH//2 - button_img.get_width()//2, (HEIGHT-150))
-back_button = Button(button_img, button_click_img, 255, "HOME", WIDTH//2 - 200+10, 100+20+40+40+30)
-next_button = Button(button_img, button_click_img, 255, "NEXT", WIDTH//2 + 200-10-150, 100+20+40+40+30)
-restart_button = Button(button_img, button_click_img, 255, "RESTART", WIDTH//2 - button_img.get_width()//2 - 100, 150+120)
-esc_button = Button(button_img, button_click_img, 255, "HOME", WIDTH//2 - button_img.get_width()//2 + 100, 150+120)
-
-pause_button = Button(pause_button_img, pause_button_click_img, 125, " ", WIDTH - pause_button_img.get_width() - 10, 10)
-unpause_button = Button(button_img, button_click_img, 255, "UNPAUSE", WIDTH//2 - 160, HEIGHT//2)
-home_from_pause_button = Button(button_img, button_click_img, 255, "HOME", WIDTH//2 + 10, HEIGHT//2)
-
 #Font
 font_large = pygame.font.Font("assets/font/Minecraft.ttf", 50)
 font_medium = pygame.font.Font("assets/font/Minecraft.ttf", 25) 
 font_small = pygame.font.Font("assets/font/Minecraft.ttf", 15) 
-
-#Music & SFX
-intro_sound = pygame.mixer.Sound("assets/music/intro.ogg")
-loop_sound = pygame.mixer.Sound("assets/music/intro-loop2.ogg")
-gameplay_music = pygame.mixer.Sound("assets/music/gameplay.ogg")
-gamewin_sound = pygame.mixer.Sound("assets/music/game-win.ogg")
-gameover_sound = pygame.mixer.Sound("assets/music/game-over.ogg")
-level_up_sound = pygame.mixer.Sound("assets/music/level-up.mp3")
-score_count_sound = pygame.mixer.Sound("assets/music/score-count.mp3")
-
-jump_sound = pygame.mixer.Sound("assets/music/jump.ogg")
-flower_sound = pygame.mixer.Sound("assets/music/flower-collect.ogg")
-countdown_sound = pygame.mixer.Sound("assets/music/countdown.mp3")
-button_hover_sound = pygame.mixer.Sound("assets/music/button-hover.mp3")
-button_click_sound = pygame.mixer.Sound("assets/music/button-click.ogg")
-
-music_channel = pygame.mixer.Channel(0); music_channel.set_volume(0.5)
-jump_channel = pygame.mixer.Channel(1); jump_channel.set_volume(0.75)
-flower_channel = pygame.mixer.Channel(2); flower_channel.set_volume(1.0)
-button_channel = pygame.mixer.Channel(3); button_channel.set_volume(1.0)
-countdown_channel = pygame.mixer.Channel(4); countdown_channel.set_volume(1.0)
 
 #Music State
 start_music_played = loop_music_playing = waiting_for_loop_to_end = False
@@ -211,6 +34,7 @@ LOOP_LENGTH_MS = 4000
 sky = pygame.Surface((WIDTH, (HEIGHT-150))); sky.fill((144, 209, 196))
 grass = pygame.Surface((WIDTH, 25)); grass.fill((101, 173, 68))
 ground = pygame.Surface((WIDTH, 125)); ground.fill((158, 96, 35))
+bar = pygame.Surface((211, 14)); bar.fill((255, 255, 255))
 
 #Sparkle
 sparkle_frames = [
@@ -302,12 +126,12 @@ player_collide_frames = [
 level_complete_screen = pygame.Surface((WIDTH, HEIGHT)); level_complete_screen.fill((0, 0, 0))
 level_complete_screen.set_alpha(0)
 
-level_complete_board = pygame.Surface((400, 200)); level_complete_board.fill((247, 219, 126))
-level_complete_board_animated = False
-
 #Bounce Animation
-animation_duration = 1.5  #seconds
+animation_duration = 1.0  #seconds
 bounce_start_time = None 
+
+#Board
+board = pygame.transform.scale(pygame.image.load("assets/board/board.png").convert_alpha(), (400, 200))
 
 def bounce_return_time(t):
     if t < 4/11.0:
@@ -318,7 +142,7 @@ def bounce_return_time(t):
         return (4356/361.0 * t * t) - (35442/1805.0 * t) + 16061/1805.0
     else:
         return (54/5.0 * t * t) - (513/25.0 * t) + 268/25.0
-    
+
 def animate_bounce(surface, x, end_y, start_y):
     global animation_duration, bounce_start_time
 
@@ -433,7 +257,8 @@ def show_score(score, high, flowers_collected):
     if score_stage >= 1:
         text_outline(highscore_text_outline, WIDTH//2 - 200 + 10 + highscore_text.get_width()//2, 160 + highscore_text.get_height()//2, 2)
     if score_stage >= 3:
-        text_outline(flowers_collected_text_outline, WIDTH//2 - 200 + 10 + flowers_collected_text.get_width()//2, 200 + flowers_collected_text.get_height()//2, 2)
+        text_outline(flowers_collected_text_outline, WIDTH//2 - 200 + 10 + flowers_collected_text.get_width()//2, 
+                     200 + flowers_collected_text.get_height()//2, 2)
 
     #Draw
     screen.blit(score_text, (WIDTH//2 - 200 + 10, 120))
@@ -527,6 +352,8 @@ def reset():
     global bounce_start_time, score_counter, score_stage, stage_timer, score_sound_playing
     
     #Game state variables
+    timer =0
+    start_state = 0
     tip_state = 0
     score = 0
     loop = 0
@@ -595,6 +422,8 @@ game_over = False
 game_paused = False
 
 #Initialization of all variables
+timer =0
+start_state = 0
 tip_state = score = loop = loop2 = loop3 = gravity = increment = high = flowers_collected = 0
 flower_loop = frame = sparkle_counter = portal_loop = move = end_scene = level_complete_alpha = 0
 enter_portal = 255
@@ -635,7 +464,7 @@ while True:
         waiting_for_loop_to_end = False
         gameplay_music_started = True
 
-    #Start Screen 
+    #Start Screen
     if game_home and not game_active and not game_over:
 
         #Music Handler
@@ -652,13 +481,18 @@ while True:
             music_channel.play(loop_sound)
             loop_cycle_end_time = current_time + LOOP_LENGTH_MS
 
+        #Overlay
+        overlay = pygame.Surface((WIDTH, HEIGHT))
+        overlay.set_alpha(120)
+        overlay.fill((0, 0, 0))
+
         #Reset buttons
         back_button.reset()
         next_button.reset()
         pause_button.reset()
         home_from_pause_button.reset()
 
-        if start_button.is_clicked():
+        if start_button.is_clicked() and start_state == 0:
             reset()
             if score > high:
                 high = score
@@ -679,15 +513,73 @@ while True:
             pygame.quit()
             exit()
 
+        if how_start_button.is_clicked():
+            start_state = 1
+
+        if volume_start_button.is_clicked():
+            start_state = 2
+
         #Start Screen Draw
         screen.fill("Grey")
 
         title = font_large.render("LILY WANTS TO RUN", True, "Black")
         screen.blit(title, (WIDTH//2-title.get_width()//2, 75))
 
-        start_button.animate()
-        exit_button.animate()
+        version = font_small.render("v 1.0", True, "Black")
+        screen.blit(version, (10, HEIGHT-version.get_height()-10))
 
+        made_by = font_small.render("DIYA JAISWAL ^_^", True, "Black")
+        screen.blit(made_by, (WIDTH-made_by.get_width()-10, HEIGHT-made_by.get_height()-10))
+
+        if start_state == 0:
+            start_button.animate()
+            exit_button.animate()
+            how_start_button.animate()
+            volume_start_button.animate()
+            x0_button.reset()
+            
+        how_to_play = [font_medium.render("Press SPACE to jump.", True, "Black"),
+                       font_medium.render("Collect all flowers.", True, "Black"),
+                       font_medium.render("Help Lily run!", True, "Black")]
+        if start_state == 1:
+            how_start_button.reset()
+            timer+=1
+            screen.blit(overlay, (0, 0))
+            animate_bounce(board, WIDTH//2, 200, -200)
+            if timer>=60:
+                bounce_start_time = None
+                h0 = how_to_play[0].get_height(); h1 = how_to_play[1].get_height(); h2 = how_to_play[2].get_height()
+                
+                screen.blit(board, (WIDTH//2-board.get_width()//2, 200-board.get_height()//2))
+                screen.blit(how_to_play[0], (WIDTH//2-how_to_play[0].get_width()//2, 200-h1//2-h0+15))
+                screen.blit(how_to_play[1], (WIDTH//2-how_to_play[1].get_width()//2, 200-h1//2+15))
+                screen.blit(how_to_play[2], (WIDTH//2-how_to_play[2].get_width()//2, 200-h1//2+h2+15))
+                x0_button.animate()
+            if x0_button.is_clicked():
+                timer=0
+                start_state=0       
+
+        if start_state == 2:
+            volume_start_button.reset()
+            timer+=1
+            screen.blit(overlay, (0, 0))
+            animate_bounce(board, WIDTH//2, 200, -200)
+            if timer>=60:
+                bounce_start_time = None
+                h0 = how_to_play[0].get_height(); h1 = how_to_play[1].get_height(); h2 = how_to_play[2].get_height()
+                
+                screen.blit(board, (WIDTH//2-board.get_width()//2, 200-board.get_height()//2))
+                screen.blit(bg_icon_img, (241, 167))
+                screen.blit(sfx_icon_img, (241, 229))
+                screen.blit(bar, (320,180)); screen.blit(bar, (320,242))
+                #Blit "volume" at top of boards!!
+                x0_button.animate()
+                left_arrow_button[0].animate(); left_arrow_button[1].animate()
+                right_arrow_button[0].animate(); right_arrow_button[1].animate()
+            if x0_button.is_clicked():
+                timer=0
+                start_state=0 
+        
     #Gameplay Screen
     elif not game_home and game_active and not game_over: 
         key = pygame.key.get_pressed() #Keyboard Input
@@ -695,6 +587,8 @@ while True:
         #Reset buttons
         start_button.reset()
         exit_button.reset()
+        how_start_button.reset()
+        volume_start_button.reset()
         restart_button.reset()
         esc_button.reset()
 
@@ -775,7 +669,7 @@ while True:
             level_complete_screen_copy.set_alpha(min(level_complete_alpha, 100))
 
             screen.blit(level_complete_screen_copy, (0, 0))
-            animate_bounce(level_complete_board, WIDTH//2, 200, -200)
+            animate_bounce(board, WIDTH//2, 200, -200)
 
             time_now = pygame.time.get_ticks()
             color = (247, 219, 126)

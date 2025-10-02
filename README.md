@@ -9,6 +9,7 @@
 Join Lily on her endless journey through colorful levels filled with obstacles and challenges, and help her run away!! ^_^ ── .✦
 
 *NOTE: Only 1 level is available as of now*
+
 *NOTE: Music adjustment is not fully developed yet!*
 
 ---
